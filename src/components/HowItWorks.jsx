@@ -6,22 +6,22 @@ export default function HowItWorks() {
     {
       icon: UserPlus,
       title: 'Create your account',
-      desc: 'Sign up to unlock interactive quizzes and track your progress securely.',
+      desc: 'Sign up to unlock restricted quizzes. Verify your email for full access.',
     },
     {
       icon: PlayCircle,
       title: 'Attempt quizzes',
-      desc: 'Answer one question at a time, mark for review, and submit anytime before timeout.',
+      desc: 'You can submit anytime before timeout. Some quizzes are open; others require signup.',
     },
     {
       icon: BarChart3,
       title: 'Analyze results',
-      desc: 'View score breakdown, accuracy, and trends to improve faster.',
+      desc: 'Get detailed breakdowns, accuracy, and insights to improve.',
     },
   ];
 
   return (
-    <section id="how-it-works" className="mx-auto mt-8 max-w-7xl px-6 pb-16">
+    <section id="how-it-works" className="mx-auto mt-4 max-w-7xl px-6 pb-12">
       <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 p-6 backdrop-blur">
         <h2 className="text-center text-2xl font-bold text-white">How It Works</h2>
         <p className="mx-auto mt-1 max-w-2xl text-center text-sm text-slate-300">
