@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 
 function uid(prefix = 'id') {
@@ -10,14 +10,23 @@ function read(key, fallback) {
 }
 function write(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
 
+const ADMIN_EMAIL = 'rk.bcmx@gmail.com';
+const ADMIN_PASSWORD = 'Ranjith@123';
+
 export default function AdminPanel({ user }) {
   const [categories, setCategories] = useState([]);
   const [quizzes, setQuizzes] = useState([]);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminAuthed, setAdminAuthed] = useState(() => read('adminAuthed', false));
+  const [authError, setAuthError] = useState('');
 
   useEffect(() => {
     setCategories(read('categories', []));
     setQuizzes(read('quizzes', []));
   }, []);
+
+  useEffect(() => { write('adminAuthed', adminAuthed); }, [adminAuthed]);
 
   function addCategory(name) {
     const next = [...categories, { id: uid('cat'), name }];
@@ -82,22 +91,52 @@ export default function AdminPanel({ user }) {
     setQuizzes(next); write('quizzes', next);
   }
 
-  const canEdit = !!user?.email; // simple gate for demo
+  function handleAdminSignIn(e) {
+    e.preventDefault();
+    setAuthError('');
+    if (adminEmail === ADMIN_EMAIL && adminPassword === ADMIN_PASSWORD) {
+      setAdminAuthed(true);
+    } else {
+      setAuthError('Invalid admin credentials');
+    }
+  }
+
+  function handleAdminSignOut() {
+    setAdminAuthed(false);
+    setAdminEmail('');
+    setAdminPassword('');
+  }
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-semibold text-slate-900">Admin Panel</h2>
-        <div className="text-sm text-slate-600">Signed in as: {user?.email || 'guest'}</div>
+        <div className="text-sm text-slate-600">{adminAuthed ? 'Admin authenticated' : 'Admin sign-in required'}</div>
       </div>
 
-      {!canEdit ? (
-        <div className="rounded-lg border bg-amber-50 p-4 text-amber-800">Sign in to manage quizzes.</div>
+      {!adminAuthed ? (
+        <form onSubmit={handleAdminSignIn} className="mx-auto max-w-md rounded-xl border bg-white p-6 shadow-sm">
+          <h3 className="mb-3 text-lg font-semibold text-slate-900">Admin sign in</h3>
+          <div className="space-y-3">
+            <label className="block text-sm text-slate-700">Email
+              <input value={adminEmail} onChange={e => setAdminEmail(e.target.value)} type="email" className="mt-1 w-full rounded-md border px-3 py-2 text-sm" placeholder="admin@example.com" />
+            </label>
+            <label className="block text-sm text-slate-700">Password
+              <input value={adminPassword} onChange={e => setAdminPassword(e.target.value)} type="password" className="mt-1 w-full rounded-md border px-3 py-2 text-sm" placeholder="••••••••" />
+            </label>
+            {authError && <p className="text-sm text-rose-600">{authError}</p>}
+            <button type="submit" className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Sign in</button>
+            <p className="text-xs text-slate-500">Use admin email rk.bcmx@gmail.com and password Ranjith@123</p>
+          </div>
+        </form>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-4">
             <div className="rounded-xl border bg-white p-4 shadow-sm">
-              <h3 className="mb-3 text-sm font-semibold text-slate-900">Categories</h3>
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-900">Categories</h3>
+                <button onClick={handleAdminSignOut} className="rounded-md border px-3 py-1.5 text-xs hover:bg-slate-50">Admin sign out</button>
+              </div>
               <CategoryForm onAdd={addCategory} />
               <ul className="mt-3 space-y-2">
                 {categories.map(c => (

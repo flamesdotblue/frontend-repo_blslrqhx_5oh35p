@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from './components/Header';
 import QuizList from './components/QuizList';
 import QuizPlayer from './components/QuizPlayer';
@@ -72,7 +72,13 @@ export default function App() {
       </main>
 
       {showAuth && (
-        <AuthModal onClose={() => setShowAuth(false)} onAuth={(email, verified) => { setUser({ email, verified }); setShowAuth(false); }} />
+        <AuthModal
+          onClose={() => setShowAuth(false)}
+          onAuth={(email, verified) => {
+            setUser({ email, verified });
+            setShowAuth(false);
+          }}
+        />
       )}
 
       <footer className="mt-16 border-t">
@@ -83,39 +89,86 @@ export default function App() {
 }
 
 function AuthModal({ onClose, onAuth }) {
-  const [mode, setMode] = useState('login'); // 'login' | 'signup'
+  const [mode, setMode] = useState('login'); // 'login' | 'signup' | 'verify'
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [verificationSent, setVerificationSent] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [error, setError] = useState('');
+
+  function handleLogin() {
+    setError('');
+    if (!email) return setError('Enter your email');
+    if (!password) return setError('Enter your password');
+    // For demo users, we accept any credentials.
+    onAuth(email, true);
+  }
+
+  function handleSignup() {
+    setError('');
+    if (!email) return setError('Enter your email');
+    if (!password || password.length < 6) return setError('Use a stronger password (min 6 chars)');
+    setVerificationSent(true);
+    setMode('verify');
+  }
+
+  function handleSimulateVerify() {
+    setVerified(true);
+  }
+
+  function handleContinueAfterVerify() {
+    if (!verified) return setError('Please verify your email to continue');
+    onAuth(email, true);
+  }
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-900">{mode === 'login' ? 'Sign in' : 'Create account'}</h3>
+          <h3 className="text-lg font-semibold text-slate-900">
+            {mode === 'login' && 'Sign in'}
+            {mode === 'signup' && 'Create account'}
+            {mode === 'verify' && 'Verify your email'}
+          </h3>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-700">Close</button>
         </div>
-        <div className="space-y-3">
-          <label className="block text-sm text-slate-700">Email
-            <input value={email} onChange={e => setEmail(e.target.value)} type="email" className="mt-1 w-full rounded-md border px-3 py-2 text-sm" placeholder="you@example.com" />
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={verified} onChange={e => setVerified(e.target.checked)} />
-            I confirm my email is verified
-          </label>
-          <button
-            onClick={() => onAuth(email || 'user@example.com', verified)}
-            className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            {mode === 'login' ? 'Continue' : 'Create account'}
-          </button>
-          <button
-            onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-            className="w-full rounded-md border px-4 py-2 text-sm hover:bg-slate-50"
-          >
-            {mode === 'login' ? "Don't have an account? Sign up" : 'Have an account? Sign in'}
-          </button>
-        </div>
-        <p className="mt-3 text-center text-xs text-slate-500">This demo simulates auth. Backend and Firebase can be wired in next step.</p>
+
+        {mode !== 'verify' && (
+          <div className="space-y-3">
+            <label className="block text-sm text-slate-700">Email
+              <input value={email} onChange={e => setEmail(e.target.value)} type="email" className="mt-1 w-full rounded-md border px-3 py-2 text-sm" placeholder="you@example.com" />
+            </label>
+            <label className="block text-sm text-slate-700">Password
+              <input value={password} onChange={e => setPassword(e.target.value)} type="password" className="mt-1 w-full rounded-md border px-3 py-2 text-sm" placeholder="Enter a strong password" />
+            </label>
+            {error && <p className="text-sm text-rose-600">{error}</p>}
+            {mode === 'login' ? (
+              <>
+                <button onClick={handleLogin} className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Continue</button>
+                <button onClick={() => setMode('signup')} className="w-full rounded-md border px-4 py-2 text-sm hover:bg-slate-50">Don't have an account? Sign up</button>
+              </>
+            ) : (
+              <>
+                <button onClick={handleSignup} className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Create account</button>
+                <button onClick={() => setMode('login')} className="w-full rounded-md border px-4 py-2 text-sm hover:bg-slate-50">Have an account? Sign in</button>
+              </>
+            )}
+          </div>
+        )}
+
+        {mode === 'verify' && (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-700">We sent a verification email to <span className="font-medium">{email}</span>. Please verify your email to continue.</p>
+            <div className="rounded-md bg-slate-50 p-3 text-xs text-slate-600">This is a demo environment. Use the buttons below to simulate the verification flow.</div>
+            <div className="flex items-center gap-2">
+              <button onClick={handleSimulateVerify} className={`rounded-md px-3 py-2 text-sm ${verified ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>{verified ? 'Verified' : 'Simulate verification'}</button>
+              <button onClick={handleContinueAfterVerify} className="rounded-md border px-3 py-2 text-sm hover:bg-slate-50">Continue</button>
+            </div>
+            {error && <p className="text-sm text-rose-600">{error}</p>}
+          </div>
+        )}
+
+        <p className="mt-3 text-center text-xs text-slate-500">Email verification is enforced for restricted quizzes.</p>
       </div>
     </div>
   );
